@@ -1,0 +1,27 @@
+{{- if .Values.init.enabled }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+bootstrapTokens:
+- token: {{ .Values.init.defaultKubeADMToken }}
+  ttl: "0"
+localAPIEndpoint:
+  advertiseAddress: {{ .Values.config.advertiseAddress }}
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: {{ .Values.config.version }}
+clusterName: {{ .Values.config.name }}
+controlPlaneEndpoint: {{ .Values.config.controlPlaneAPIEndpoint }}
+networking:
+  podSubnet: {{ .Values.config.podSubnet }}
+  serviceSubnet: {{ .Values.config.serviceSubnet }}
+apiServer:
+  certSANs:
+  - {{ .Values.config.advertiseAddress }}
+  - {{ .Values.config.controlPlaneAPIEndpoint }}
+  controlPlaneComponent:
+    extraArgs:
+      max-requests-inflight: "1000"
+      max-mutating-requests-inflight: "500"        
+      watch-cache-sizes: "persistentvolumeclaims#1000,persistentvolumes#1000"
+{{- end }}

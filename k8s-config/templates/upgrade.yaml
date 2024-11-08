@@ -1,0 +1,12 @@
+{{- if .Values.upgrade.enabled }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: UpgradeConfiguration
+apply:
+  kubernetesVersion: {{ .Values.upgrade.targetVersion }}
+  printConfig: {{ .Values.printConfig.enabled }}
+diff:
+  kubernetesVersion: {{ .Values.upgrade.targetVersion }}
+plan:
+  kubernetesVersion: {{ .Values.upgrade.targetVersion }}
+  printConfig: {{ .Values.printConfig.enabled }}
+{{- end }}
