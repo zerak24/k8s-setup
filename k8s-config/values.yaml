@@ -6,12 +6,14 @@ config:
   name: dev-cluster
   advertiseAddress: 10.10.0.140
   controlPlaneAPIEndpoint: 10.20.30.246
+  bindPort: 8443
   networking:
     podSubnet: 10.10.0.0/16
     serviceSubnet: 10.12.0.0/16
 join:
   enabled: false
   nodeArch: amd64
+  joinControlPlane: true
 upgrade:
   enabled: false
   targetVersion: v1.32

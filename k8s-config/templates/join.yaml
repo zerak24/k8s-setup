@@ -8,7 +8,12 @@ discovery:
   bootstrapToken:
     apiServerEndpoint: {{ .Values.config.advertiseAddress }}
     token: {{ .Values.init.defaultKubeADMToken }}
----
-apiVersion: kubeadm.k8s.io/v1beta4
-kind: KubeletConfiguration
+{{- if .Values.join.joinControlPlane }}
+controlPlane:
+  localAPIEndpoint:
+  advertiseAddress: {{ .Values.config.advertiseAddress }}
+{{- if hasKey .Values.config "bindPort" }}
+  bindPort: {{ .Values.config.bindPort }}
+{{- end }}
+{{- end }}
 {{- end }}

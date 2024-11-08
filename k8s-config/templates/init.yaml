@@ -6,6 +6,9 @@ bootstrapTokens:
   ttl: "0"
 localAPIEndpoint:
   advertiseAddress: {{ .Values.config.advertiseAddress }}
+{{- if hasKey .Values.config "bindPort" }}
+  bindPort: {{ .Values.config.bindPort }}
+{{- end }}
 ---
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
