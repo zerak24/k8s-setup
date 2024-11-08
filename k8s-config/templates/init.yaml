@@ -12,9 +12,10 @@ kind: ClusterConfiguration
 kubernetesVersion: {{ .Values.config.version }}
 clusterName: {{ .Values.config.name }}
 controlPlaneEndpoint: {{ .Values.config.controlPlaneAPIEndpoint }}
+{{- with .Values.config.networking }}
 networking:
-  podSubnet: {{ .Values.config.podSubnet }}
-  serviceSubnet: {{ .Values.config.serviceSubnet }}
+  {{- toYaml . | nindent 2 }}
+{{- end }}
 apiServer:
   certSANs:
   - {{ .Values.config.advertiseAddress }}
@@ -23,5 +24,4 @@ apiServer:
     extraArgs:
       max-requests-inflight: "1000"
       max-mutating-requests-inflight: "500"        
-      watch-cache-sizes: "persistentvolumeclaims#1000,persistentvolumes#1000"
 {{- end }}
