@@ -1,0 +1,18 @@
+
+{{- if .Values.generate.etcdCluster }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+etcd:
+  local:
+    serverCertSANs:
+    - {{ .Values.etcdCluster.advertiseAddress }}
+    peerCertSANs:
+    - {{ .Values.etcdCluster.advertiseAddress }}
+    extraArgs:
+      initial-cluster: 
+      initial-cluster-state: new
+      listen-peer-urls: https://{{ .Values.etcdCluster.advertiseAddress }}:2380
+      listen-client-urls: https://{{ .Values.etcdCluster.advertiseAddress }}:2379
+      advertise-client-urls: https://{{ .Values.etcdCluster.advertiseAddress }}:2379
+      initial-advertise-peer-urls: https://{{ .Values.etcdCluster.advertiseAddress }}:2380
+{{- end }}

@@ -1,0 +1,12 @@
+{{- if .Values.generation.clusterInit }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+bootstrapTokens:
+- token: {{ .Values.clusterInit.defaultKubeADMToken }}
+  ttl: "0"
+localAPIEndpoint:
+  advertiseAddress: {{ .Values.clusterConfig.advertiseAddress }}
+{{- if hasKey .Values.clusterConfig "bindPort" }}
+  bindPort: {{ .Values.clusterConfig.bindPort }}
+{{- end }}    
+{{- end }}

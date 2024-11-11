@@ -1,0 +1,20 @@
+
+{{- if .Values.generate.clusterConfig }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: {{ .Values.clusterConfig.version }}
+clusterName: {{ .Values.clusterConfig.name }}
+controlPlaneEndpoint: {{ .Values.clusterConfig.controlPlaneAPIEndpoint }}
+{{- with .Values.clusterConfig.networking }}
+networking:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+apiServer:
+  certSANs:
+  - {{ .Values.clusterConfig.advertiseAddress }}
+  - {{ .Values.clusterConfig.controlPlaneAPIEndpoint }}
+  controlPlaneComponent:
+    extraArgs:
+      max-requests-inflight: "1000"
+      max-mutating-requests-inflight: "500"        
+{{- end }}

@@ -1,0 +1,6 @@
+{{- if .Values.generate.etcdInit }}
+apiVersion: "kubeadm.k8s.io/v1beta4"
+kind: InitConfiguration
+localAPIEndpoint:
+    advertiseAddress: {{ .Values.etcdInit.advertiseAddress }}
+{{- end }}

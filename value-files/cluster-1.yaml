@@ -1,13 +1,6 @@
 generate:
-  clusterConfig: false
-  clusterInit: false
-  clusterJoin: false
-  clusterUpgrade: false
-
-  etcdKubelet: false
-  etcdInit: false
-
-# CLUSTER
+  clusterConfig: true
+  clusterJoin: true
 
 clusterInit:
   defaultKubeADMToken: 9ycp6g.c6noom702yyx9cyb
@@ -26,14 +19,3 @@ clusterJoin:
   nodeArch: amd64
   joinControlPlane: true
 
-clusterUpgrade:
-  targetVersion: v1.31
-  printConfig: true
-
-# ETCD 
-
-etcdKubelet:
-  containerRuntimeEndpoint: unix:///var/run/containerd/containerd.sock
-
-etcdCluster:
-  advertiseAddress: 10.10.0.250

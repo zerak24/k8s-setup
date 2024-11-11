@@ -1,0 +1,13 @@
+generate:
+
+  etcdKubelet: true
+  # etcdInit: true
+  # etcdCluster: true
+
+# ETCD 
+
+etcdKubelet:
+  containerRuntimeEndpoint: unix:///var/run/containerd/containerd.sock
+
+etcdCluster:
+  advertiseAddress: 10.10.0.248

@@ -1,0 +1,17 @@
+generate:
+  clusterConfig: true
+  clusterInit: true
+
+clusterInit:
+  defaultKubeADMToken: 9ycp6g.c6noom702yyx9cyb
+
+clusterConfig:
+  version: v1.31
+  name: dev-cluster
+  advertiseAddress: 10.10.0.140
+  controlPlaneAPIEndpoint: 10.20.30.246
+  bindPort: 8443
+  networking:
+    podSubnet: 10.10.0.0/16
+    serviceSubnet: 10.12.0.0/16
+
