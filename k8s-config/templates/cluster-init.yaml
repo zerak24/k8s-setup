@@ -1,4 +1,4 @@
-{{- if .Values.generation.clusterInit }}
+{{- if .Values.generate.clusterInit }}
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: InitConfiguration
 bootstrapTokens:

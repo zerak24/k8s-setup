@@ -16,5 +16,9 @@ apiServer:
   controlPlaneComponent:
     extraArgs:
       max-requests-inflight: "1000"
-      max-mutating-requests-inflight: "500"        
+      max-mutating-requests-inflight: "500"
+{{- with .Values.clusterConfig.etcd }}
+etcd:
+  {{- toYaml . | nindent 2 }}
+{{- end}}    
 {{- end }}
