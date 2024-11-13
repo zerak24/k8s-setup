@@ -1,10 +1,13 @@
 #! /bin/bash
 
-## PREPARE KUBELET
+# prepare essential file
 
 mkdir -p /etc/systemd/system/kubelet.service.d
-
-mv ./etcdKubelet.yaml /etc/systemd/system/kubelet.service.d/kubelet.conf
+mkdir -p /etc/kubernetes/pki/etcd
+wget http://$2/file/etcd/ca.crt -O /etc/kubernetes/pki/etcd/ca.crt
+wget http://$2/file/etcd/ca.key -O /etc/kubernetes/pki/etcd/ca.key
+wget http://$2/file/kubelet-etcd-$1.yaml -O /etc/systemd/system/kubelet.service.d/kubelet.conf
+wget http://$2/file/init-etcd-$1.yaml -O init-etcd.yaml
 
 cat << EOF > /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf
 [Service]
@@ -16,29 +19,21 @@ EOF
 systemctl daemon-reload
 systemctl restart kubelet
 
-## PREPARE CERTS
+# init essential certs
 
-kubeadm init phase certs etcd-ca
+kubeadm init phase certs etcd-server --config=init-etcd.yaml
+kubeadm init phase certs etcd-peer --config=init-etcd.yaml
+kubeadm init phase certs etcd-healthcheck-client --config=init-etcd.yaml
+kubeadm init phase certs apiserver-etcd-client --config=init-etcd.yaml
 
-# already have copy like this
-# /etc/kubernetes/pki/etcd/ca.crt
-# /etc/kubernetes/pki/etcd/ca.key
+# init cluster
 
-kubeadm init phase certs etcd-server --config=./etcdCluster.yaml
-kubeadm init phase certs etcd-peer --config=./etcdCluster.yaml
-kubeadm init phase certs etcd-healthcheck-client --config=./etcdCluster.yaml
-kubeadm init phase certs apiserver-etcd-client --config=./etcdCluster.yaml
+kubeadm init phase etcd local --config=init-etcd.yaml
 
-## INIT
-
-sleep 1
-
-kubeadm init phase etcd local --config=./etcdCluster.yaml
-
-## CHECK HEALTH
+# healthcheck optional
 
 # ETCDCTL_API=3 etcdctl \
 # --cert /etc/kubernetes/pki/etcd/peer.crt \
 # --key /etc/kubernetes/pki/etcd/peer.key \
 # --cacert /etc/kubernetes/pki/etcd/ca.crt \
-# --endpoints https://${HOST0}:2379 endpoint health
+# --endpoints https://192.168.180.129:2379 endpoint health

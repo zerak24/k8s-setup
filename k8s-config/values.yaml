@@ -21,6 +21,15 @@ clusterConfig:
   networking:
     podSubnet: 10.10.0.0/16
     serviceSubnet: 10.12.0.0/16
+  apiServer:
+    certSANs:
+    - 10.10.0.140
+    - 10.20.30.246
+    extraArgs:
+      - name: max-requests-inflight
+        value: "1000"
+      - name: max-mutating-requests-inflight
+        value: "500"
 
 clusterJoin:
   nodeArch: amd64
@@ -37,3 +46,5 @@ etcdKubelet:
 
 etcdCluster:
   advertiseAddress: 10.10.0.250
+  initialCluster: "etcd-0=https://10.10.0.1:2380,etcd-1=https://10.10.0.2:2380,etcd-2=https://10.10.0.3:2380"
+

@@ -10,5 +10,7 @@ etcdKubelet:
   containerRuntimeEndpoint: unix:///var/run/containerd/containerd.sock
 
 etcdCluster:
-  advertiseAddress: 10.10.0.148
-  initialCluster: "etcd-0=https://10.10.0.146:2380,etcd-1=https://10.10.0.147:2380,etcd-2=https://10.10.0.148:2380"
+  name: etcd
+  advertiseAddress: 10.10.0.155
+  initialCluster: "etcd=https://10.10.0.155:2380"
+

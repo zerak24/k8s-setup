@@ -11,6 +11,13 @@ swapoff -a
 
 apt-get -y install net-tools apt-transport-https ca-certificates curl gpg
 
+# enable ip_forward
+
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.ipv4.ip_forward = 1
+EOF
+sudo sysctl --system
+
 # add apt key rings
 
 install -m 0755 -d /etc/apt/keyrings
@@ -26,12 +33,17 @@ echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.
 
 apt-get update
 
-# setup containerd
+# setup containerd && enable plugin cri
 
 apt-get install -y containerd.io
 apt-mark hold containerd.io
+sed -i 's/disabled_plugins/#disabled_plugins/g' /etc/containerd/config.toml
+crictl config set --runtime-endpoint=unix:///var/run/containerd/containerd.sock
+crictl config default > /etc/containerd/config.toml
+sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 sleep 1
 systemctl enable --now containerd
+crictl config --set runtime-endpoint=unix:///var/run/containerd/containerd.sock
 
 wget https://github.com/containernetworking/plugins/releases/download/v1.6.0/cni-plugins-linux-amd64-v1.6.0.tgz
 mkdir -p /opt/cni/bin
@@ -46,7 +58,3 @@ apt-mark hold kubelet kubeadm kubectl
 sleep 1
 systemctl enable --now kubelet
 
-# enable ip_forward
-
-sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
-sysctl -p

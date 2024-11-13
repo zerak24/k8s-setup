@@ -6,10 +6,10 @@ clusterInit:
   defaultKubeADMToken: 9ycp6g.c6noom702yyx9cyb
 
 clusterConfig:
-  version: v1.31
+  version: v1.31.2
   name: dev-cluster
-  advertiseAddress: 10.10.0.140
-  controlPlaneAPIEndpoint: 10.20.30.246:9000
+  advertiseAddress: 10.10.0.150
+  controlPlaneAPIEndpoint: 192.168.180.133:9000
   networking:
     podSubnet: 10.10.0.0/16
     serviceSubnet: 10.12.0.0/16

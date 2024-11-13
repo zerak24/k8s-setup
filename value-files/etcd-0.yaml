@@ -1,8 +1,8 @@
 generate:
 
-  etcdKubelet: true
-  # etcdInit: true
-  # etcdCluster: true
+  # etcdKubelet: true
+  etcdInit: true
+  etcdCluster: true
 
 # ETCD 
 
@@ -10,4 +10,6 @@ etcdKubelet:
   containerRuntimeEndpoint: unix:///var/run/containerd/containerd.sock
 
 etcdCluster:
-  advertiseAddress: 10.10.0.248
+  advertiseAddress: 10.10.0.146
+  initialCluster: "etcd-0=https://10.10.0.146:2380,etcd-1=https://10.10.0.147:2380,etcd-2=https://10.10.0.148:2380"
+

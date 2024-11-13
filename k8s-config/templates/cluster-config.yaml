@@ -9,14 +9,10 @@ controlPlaneEndpoint: {{ .Values.clusterConfig.controlPlaneAPIEndpoint }}
 networking:
   {{- toYaml . | nindent 2 }}
 {{- end }}
+{{- with .Values.clusterConfig.apiServer }}
 apiServer:
-  certSANs:
-  - {{ .Values.clusterConfig.advertiseAddress }}
-  - {{ .Values.clusterConfig.controlPlaneAPIEndpoint }}
-  controlPlaneComponent:
-    extraArgs:
-      max-requests-inflight: "1000"
-      max-mutating-requests-inflight: "500"
+  {{- toYaml . | nindent 2 }}
+{{- end }}
 {{- with .Values.clusterConfig.etcd }}
 etcd:
   {{- toYaml . | nindent 2 }}
