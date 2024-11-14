@@ -16,5 +16,7 @@ apiServer:
 {{- with .Values.clusterConfig.etcd }}
 etcd:
   {{- toYaml . | nindent 2 }}
-{{- end}}    
+{{- end}}
+dns:
+  enabled: true
 {{- end }}

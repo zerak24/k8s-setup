@@ -18,6 +18,8 @@ net.ipv4.ip_forward = 1
 EOF
 sudo sysctl --system
 
+echo br_netfilter | tee /etc/modules-load.d/kubernetes.conf
+
 # add apt key rings
 
 install -m 0755 -d /etc/apt/keyrings
@@ -39,7 +41,7 @@ apt-get install -y containerd.io
 apt-mark hold containerd.io
 sed -i 's/disabled_plugins/#disabled_plugins/g' /etc/containerd/config.toml
 crictl config set --runtime-endpoint=unix:///var/run/containerd/containerd.sock
-crictl config default > /etc/containerd/config.toml
+containerd config default > /etc/containerd/config.toml
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 sleep 1
 systemctl enable --now containerd
