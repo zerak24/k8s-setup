@@ -1,0 +1,52 @@
+
+{{- if hasKey .Values.cluster "etcd" }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+{{- if hasKey .Values.cluster "controlPlane" }}
+kubernetesVersion: {{ .Values.cluster.version }}
+clusterName: {{ .Values.cluster.name | default "default-cluster" }}
+nodeRegistration:
+  criSocket: {{ .Values.cluster.defaultCriSocket }}
+controlPlaneEndpoint: {{ .Values.cluster.controlPlane.controlPlaneEndpoint }}
+networking:
+  {{- toYaml .Values.cluster.networking | nindent 2 }}
+apiServer:
+  certSANs:
+    {{- toYaml .Values.cluster.apiServer.additionalCertSANs | nindent 4 }}
+    - {{ .Values.cluster.controlPlane.advertiseAddress }}
+  extraArgs:
+    - name: max-requests-inflight
+      value: "1000"
+    - name: max-mutating-requests-inflight
+      value: "500"
+dns:
+  enabled: true
+{{- end }}
+etcd:
+  {{- with .Values.cluster.etcd.local }}
+  local:
+    serverCertSANs:
+    - {{ .advertiseAddress }}
+    peerCertSANs:
+    - {{ .advertiseAddress }}
+    extraArgs:
+      - name: initial-cluster
+        value: {{ include "config.etcdLocal" $.Values.cluster.etcd.etcdHosts }}
+      - name: initial-cluster-state
+        value: new
+      - name: listen-peer-urls
+        value: https://{{ .advertiseAddress }}:2380
+      - name: listen-client-urls
+        value: https://{{ .advertiseAddress }}:2379
+      - name: advertise-client-urls
+        value: https://{{ .advertiseAddress }}:2379
+      - name: initial-advertise-peer-urls
+        value: https://{{ .advertiseAddress }}:2380
+  {{- end }}
+  {{- with .Values.cluster.etcd.external }}
+  external:
+    {{- toYaml . | nindent 4 }}
+    endpoints:
+      {{- include "config.etcdExternal" $.Values.cluster.etcd.etcdHosts | nindent 6 }}
+  {{- end }}
+{{- end }}

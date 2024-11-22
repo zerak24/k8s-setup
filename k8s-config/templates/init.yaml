@@ -1,0 +1,18 @@
+{{- if hasKey .Values.cluster "etcd" }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+{{- if hasKey .Values.cluster "controlPlane" }}
+nodeRegistration:
+  criSocket: {{ .Values.cluster.node.criSocket }}
+  {{- with .Values.cluster.node.taints }}
+  taints:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+localAPIEndpoint:
+  {{- if hasKey .Values.cluster "controlPlane" }}
+  advertiseAddress: {{ .Values.cluster.controlPlane.advertiseAddress }}
+  {{- else }}
+  advertiseAddress: {{ .Values.cluster.etcd.local.advertiseAddress }}
+  {{- end }}
+{{- end }}

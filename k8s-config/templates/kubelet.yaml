@@ -1,0 +1,23 @@
+{{- if hasKey .Values.cluster "node" }}
+{{- if not ( hasKey .Values.cluster "controlPlane" ) }}
+{{- if hasKey .Values.cluster "etcd" }}
+{{- if hasKey .Values.cluster.etcd "local" }}
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    enabled: false
+authorization:
+  mode: AlwaysAllow
+cgroupDriver: systemd
+address: 127.0.0.1
+containerRuntimeEndpoint: {{ .Values.cluster.node.criSocket }}
+staticPodPath: /etc/kubernetes/manifests
+shutdownGracePeriod: 5m
+shutdownGracePeriodCriticalPods: 3m
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,6 +1,10 @@
 #! /bin/bash
 
-apt-get update
+# variables
+
+RUNTIME_CONTAINER=unix:///var/run/containerd/containerd.sock
+K8S_VERSION=v1.31
+CNI_VERSION=v1.6.0
 
 # turn off swap
 
@@ -9,6 +13,7 @@ swapoff -a
 
 # install tools
 
+apt-get update
 apt-get -y install net-tools apt-transport-https ca-certificates curl gpg
 
 # enable ip_forward
@@ -30,8 +35,8 @@ echo \
   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
   tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+curl -fsSL https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
 
 apt-get update
 
@@ -40,20 +45,19 @@ apt-get update
 apt-get install -y containerd.io
 apt-mark hold containerd.io
 sed -i 's/disabled_plugins/#disabled_plugins/g' /etc/containerd/config.toml
-crictl config set --runtime-endpoint=unix:///var/run/containerd/containerd.sock
 containerd config default > /etc/containerd/config.toml
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 sleep 1
+crictl config --set runtime-endpoint=${RUNTIME_CONTAINER}
 systemctl enable --now containerd
-crictl config --set runtime-endpoint=unix:///var/run/containerd/containerd.sock
 
-wget https://github.com/containernetworking/plugins/releases/download/v1.6.0/cni-plugins-linux-amd64-v1.6.0.tgz
+wget https://github.com/containernetworking/plugins/releases/download/${CNI_VERSION}/cni-plugins-linux-amd64-${CNI_VERSION}.tgz
 mkdir -p /opt/cni/bin
-tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.6.0.tgz
-rm cni-plugins-linux-amd64-v1.6.0.tgz
+tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-${CNI_VERSION}.tgz
+rm cni-plugins-linux-amd64-${CNI_VERSION}.tgz
 sleep 1
 
-# setup k8s v1.31 tools
+# setup k8s tools
 
 apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl

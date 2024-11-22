@@ -1,0 +1,12 @@
+{{- if not ( hasKey .Values.cluster "node" ) }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: UpgradeConfiguration
+apply:
+  kubernetesVersion: {{ .Values.cluster.version }}
+  printConfig: true
+diff:
+  kubernetesVersion: {{ .Values.cluster.version }}
+plan:
+  kubernetesVersion: {{ .Values.cluster.version }}
+  printConfig: true
+{{- end }}

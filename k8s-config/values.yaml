@@ -1,50 +1,40 @@
-generate:
-  clusterConfig: false
-  clusterInit: false
-  clusterJoin: false
-  clusterUpgrade: false
+# cluster:
+#   name: "dummy-cluster"
+#   version: "v1.31.2"
+#   controlPlaneEndpoint: "192.168.180.133:9000"
+#   defaultCriSocket: "unix:///var/run/containerd/containerd.sock"
+#   networking:
+#     podSubnet: 10.100.0.0/16
+#     serviceSubnet: 10.120.0.0/16
+#   apiServer:
+#     additionalCertSANs:
+#     - 192.168.180.133
 
-  etcdKubelet: false
-  etcdInit: false
+#   node:
+#     criSocket: "unix:///var/run/containerd/containerd.sock"
+#     taints:
+#       - key: "usage"
+#         value: "monitor"
+#         effect: "NoSchedule"
+#     join:
+#       token: "abcdef.1234567890abcdef"
+#       caCertHashes:
+#         - sha256:c6cf3ab7051e97c30808179739d7dca2431abe1dddf32c66d742a8e857d20123
 
-# CLUSTER
+#   controlPlane:
+#     advertiseAddress: "10.10.0.146"
 
-clusterInit:
-  defaultKubeADMToken: 9ycp6g.c6noom702yyx9cyb
+#   etcd:
+#     etcdHosts:
+#       etcd-0: 10.10.0.146
+#       etcd-1: 10.10.0.147
+#       etcd-2: 10.10.0.148
 
-clusterConfig:
-  version: v1.31
-  name: dev-cluster
-  advertiseAddress: 10.10.0.140
-  controlPlaneAPIEndpoint: 10.20.30.246
-  bindPort: 8443
-  networking:
-    podSubnet: 10.10.0.0/16
-    serviceSubnet: 10.12.0.0/16
-  apiServer:
-    certSANs:
-    - 10.10.0.140
-    - 10.20.30.246
-    extraArgs:
-      - name: max-requests-inflight
-        value: "1000"
-      - name: max-mutating-requests-inflight
-        value: "500"
+#     local:
+#       advertiseAddress: "10.10.0.146"
 
-clusterJoin:
-  nodeArch: amd64
-  joinControlPlane: true
-
-clusterUpgrade:
-  targetVersion: v1.31
-  printConfig: true
-
-# ETCD 
-
-etcdKubelet:
-  containerRuntimeEndpoint: unix:///var/run/containerd/containerd.sock
-
-etcdCluster:
-  advertiseAddress: 10.10.0.250
-  initialCluster: "etcd-0=https://10.10.0.1:2380,etcd-1=https://10.10.0.2:2380,etcd-2=https://10.10.0.3:2380"
+#     external:
+#       caFile: /etc/kubernetes/pki/etcd/ca.crt
+#       certFile: /etc/kubernetes/pki/apiserver-etcd-client.crt
+#       keyFile: /etc/kubernetes/pki/apiserver-etcd-client.key
 

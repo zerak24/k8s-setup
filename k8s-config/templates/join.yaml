@@ -1,0 +1,23 @@
+{{- if hasKey .Values.cluster "node" }}
+{{- if not ( hasKey .Values.cluster "etcd" ) }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: JoinConfiguration
+nodeRegistration:
+  criSocket: {{ .Values.cluster.node.criSocket }}
+  {{- with .Values.cluster.node.taints }}
+  taints:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: {{ .Values.cluster.controlPlaneEndpoint }}
+    {{- with .Values.cluster.node.join }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- if hasKey .Values.cluster "controlPlane" }}
+controlPlane:
+  localAPIEndpoint:
+    advertiseAddress: {{ .Values.cluster.controlPlane.advertiseAddress }}
+{{- end }}
+{{- end }}
+{{- end }}

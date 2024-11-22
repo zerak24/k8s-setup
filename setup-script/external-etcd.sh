@@ -4,10 +4,10 @@
 
 mkdir -p /etc/systemd/system/kubelet.service.d
 mkdir -p /etc/kubernetes/pki/etcd
-wget http://$2/file/etcd/ca.crt -O /etc/kubernetes/pki/etcd/ca.crt
-wget http://$2/file/etcd/ca.key -O /etc/kubernetes/pki/etcd/ca.key
-wget http://$2/file/kubelet-etcd-$1.yaml -O /etc/systemd/system/kubelet.service.d/kubelet.conf
-wget http://$2/file/init-etcd-$1.yaml -O init-etcd.yaml
+# wget http://$2/file/etcd/ca.crt -O /etc/kubernetes/pki/etcd/ca.crt
+# wget http://$2/file/etcd/ca.key -O /etc/kubernetes/pki/etcd/ca.key
+# wget http://$2/file/kubelet-etcd-$1.yaml -O /etc/systemd/system/kubelet.service.d/kubelet.conf
+# wget http://$2/file/init-etcd-$1.yaml -O init-etcd.yaml
 
 cat << EOF > /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf
 [Service]
