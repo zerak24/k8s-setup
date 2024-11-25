@@ -151,7 +151,7 @@ function control() {
   apt-get install -y nginx libnginx-mod-stream
 
   # config load balancer (TODO)
-  cat << EOF >> /etc/nginx/nginx.conf
+  cat << EOF > /etc/nginx/conf.d/lb.conf
 stream {
   upstream kubernetes_apis {
     least_conn;
@@ -163,6 +163,12 @@ stream {
   }
 }
 EOF
+
+#   cat << EOF >> /etc/nginx/nginx.conf
+# stream {
+#   include /etc/nginx/lb.conf
+# }
+# EOF
 
   # prepare essential file
   mkdir -p /etc/kubernetes/pki/etcd
