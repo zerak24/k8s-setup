@@ -1,6 +1,7 @@
 # Init Separately Etcd Cluster
   * comment `cluster.controlPlane`
   * comment `cluster.etcd.external`
+  * set     `cluster.etcd.local.kubelet` to `true` to generate `KubeletConfiguration`
 # Init Control Plane with External Etcd
   * comment `cluster.etcd.local`
 # Init Control Plane stack with Etcd

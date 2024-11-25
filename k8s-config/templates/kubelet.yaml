@@ -2,6 +2,7 @@
 {{- if not ( hasKey .Values.cluster "controlPlane" ) }}
 {{- if hasKey .Values.cluster "etcd" }}
 {{- if hasKey .Values.cluster.etcd "local" }}
+{{- if .Values.cluster.etcd.local.kubelet }}
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 authentication:
@@ -17,6 +18,7 @@ containerRuntimeEndpoint: {{ .Values.cluster.node.criSocket }}
 staticPodPath: /etc/kubernetes/manifests
 shutdownGracePeriod: 5m
 shutdownGracePeriodCriticalPods: 3m
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

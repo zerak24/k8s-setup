@@ -1,4 +1,5 @@
 {{- if hasKey .Values.cluster "etcd" }}
+{{- if hasKey .Values.cluster.etcd "local" }}
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: InitConfiguration
 {{- if hasKey .Values.cluster "controlPlane" }}
@@ -15,4 +16,5 @@ localAPIEndpoint:
   {{- else }}
   advertiseAddress: {{ .Values.cluster.etcd.local.advertiseAddress }}
   {{- end }}
+{{- end }}
 {{- end }}

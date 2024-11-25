@@ -31,6 +31,7 @@
 #       etcd-2: 10.10.0.148
 
 #     local:
+#       kubelet: false
 #       advertiseAddress: "10.10.0.146"
 
 #     external:
