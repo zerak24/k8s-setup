@@ -1,4 +1,23 @@
 #! /bin/bash
+
+function check() {
+  set -e
+
+  if [ -z ${hostname} ]
+  then
+    echo "hostname is not define"
+    exit 0
+  fi
+
+  if [ -z ${file} ]
+  then
+    echo "file is not define"
+    exit 0
+  fi
+
+  set +e
+}
+
 function help_fn() {
   set -e
 
@@ -14,6 +33,7 @@ EOF
   set +e
 }
 
+# default values
 dir=$(pwd)
 
 while (( "$#" )); do

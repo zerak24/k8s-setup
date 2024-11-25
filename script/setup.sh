@@ -1,5 +1,23 @@
 #! /bin/bash
 
+function check() {
+  set -e
+
+  if [ -z ${hostname} ]
+  then
+    echo "hostname is not define"
+    exit 0
+  fi
+
+  if [ -z ${url} ]
+  then
+    echo "url is not define"
+    exit 0
+  fi
+
+  set +e
+}
+
 function help_func() {
   set -e
 
@@ -29,31 +47,6 @@ EOF
 
 function base() {
   set -e
-
-  # default setup
-  runtime_container=unix:///var/run/containerd/containerd.sock
-  k8s_version=v1.31
-  cni_version=v1.6.0
-
-  while (( "$#" )); do
-    case "$1" in
-      -r|--runtime-container)
-        runtime_container=$2
-        shift 2
-        ;;
-      -v|--k8s-version)
-        k8s_version=$2
-        shift 2
-        ;;
-      -c|--cni-version)
-        cni_version=$2
-        shift 2
-        ;;
-      *)
-        shift
-        ;;
-    esac
-  done
 
   # turn off swap
   sed -i 's/\/swap/#\/swap/1' /etc/fstab
@@ -116,21 +109,7 @@ EOF
 function etcd() {
   set -e
 
-  while (( "$#" )); do
-    case "$1" in
-      -n|--hostname)
-        hostname=$2
-        shift 2
-        ;;
-      -u|--url)
-        url=$2
-        shift 2
-        ;;
-      *)
-        shift
-        ;;
-    esac
-  done
+  check
 
   # prepare essential file
   mkdir -p /etc/systemd/system/kubelet.service.d
@@ -166,33 +145,8 @@ EOF
 function control() {
   set -e
 
-  while (( "$#" )); do
-    case "$1" in
-      -n|--hostname)
-        hostname=$2
-        shift 2
-        ;;
-      -u|--url)
-        url=$2
-        shift 2
-        ;;
-      --nginx)
-        nginx_enable=true
-        shift
-        ;;
-      --lb-port)
-        lb_port=$2
-        shift 2
-        ;;
-      --server-port)
-        server_port=$2
-        shift 2
-        ;;
-      *)
-        shift
-        ;;
-    esac
-  done
+  check
+
   # nginx load balancer enable
   apt-get install -y nginx libnginx-mod-stream
 
@@ -228,21 +182,68 @@ action=$1
 shift
 params="$@"
 
+# default setup
+runtime_container=unix:///var/run/containerd/containerd.sock
+k8s_version=v1.31
+cni_version=v1.6.0
+lb_port=9000
+server_port=6443
+
+while (( "$#" )); do
+  case "$1" in
+    -r|--runtime-container)
+      runtime_container=$2
+      shift 2
+      ;;
+    -v|--k8s-version)
+      k8s_version=$2
+      shift 2
+      ;;
+    -c|--cni-version)
+      cni_version=$2
+      shift 2
+      ;;
+    -n|--hostname)
+      hostname=$2
+      shift 2
+      ;;
+    -u|--url)
+      url=$2
+      shift 2
+      ;;
+    --nginx)
+      nginx_enable=true
+      shift
+      ;;
+    --lb-port)
+      lb_port=$2
+      shift 2
+      ;;
+    --server-port)
+      server_port=$2
+      shift 2
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+
 case ${action} in
   help)
   help_func
   exit 0
   ;;
   base)
-  base $params
+  base
   exit 0
   ;;
   etcd)
-  etcd $params
+  etcd
   exit 0
   ;;
   control)
-  control $params
+  control
   exit 0
   ;;
   *)
