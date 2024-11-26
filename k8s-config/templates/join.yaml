@@ -18,6 +18,7 @@ discovery:
 controlPlane:
   localAPIEndpoint:
     advertiseAddress: {{ .Values.cluster.controlPlane.advertiseAddress }}
+  certificateKey: {{ .Values.cluster.controlPlane.certificateKey }}
 {{- end }}
 {{- end }}
 {{- end }}

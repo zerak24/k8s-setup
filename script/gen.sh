@@ -35,6 +35,7 @@ EOF
 
 # default values
 dir=$(pwd)
+additional_args=""
 
 while (( "$#" )); do
   case "$1" in
@@ -58,6 +59,22 @@ while (( "$#" )); do
       kubelet=true
       shift 1
       ;;
+    --ca-crt)
+      ca_crt=$2
+      shift 2
+      additional_args="${additional_args}--set cluster.node.join.caCertHashes={sha256:$(cat ${ca_crt} | openssl x509 -pubkey  | openssl rsa -pubin -outform der 2>/dev/null | \
+          openssl dgst -sha256 -hex | sed 's/^.* //')} "
+      ;;
+    --token)
+      token=$2
+      shift 2
+      additional_args="${additional_args}--set cluster.node.join.token=${token} "
+      ;;
+    --certs-key)
+      certs_key=$2
+      shift 2
+      additional_args="${additional_args}--set cluster.controlPlane.certificateKey=${certs_key} "
+      ;;
     *)
       shift
       ;;
@@ -78,6 +95,6 @@ fi
 if [ ! -z ${file} ] && [ ! -z ${hostname} ]
 then
   command="helm template ./k8s-config \
-  -f ${file} > ${dir}/${hostname}.yaml"
+  -f ${file} ${additional_args} > ${dir}/${hostname}.yaml"
   eval ${command}
 fi

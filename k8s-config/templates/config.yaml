@@ -5,9 +5,7 @@ kind: ClusterConfiguration
 {{- if hasKey .Values.cluster "controlPlane" }}
 kubernetesVersion: {{ .Values.cluster.version }}
 clusterName: {{ .Values.cluster.name | default "default-cluster" }}
-nodeRegistration:
-  criSocket: {{ .Values.cluster.defaultCriSocket }}
-controlPlaneEndpoint: {{ .Values.cluster.controlPlane.controlPlaneEndpoint }}
+controlPlaneEndpoint: {{ .Values.cluster.controlPlaneEndpoint }}
 networking:
   {{- toYaml .Values.cluster.networking | nindent 2 }}
 apiServer:
@@ -19,8 +17,6 @@ apiServer:
       value: "1000"
     - name: max-mutating-requests-inflight
       value: "500"
-dns:
-  enabled: true
 {{- end }}
 etcd:
   {{- with .Values.cluster.etcd.local }}

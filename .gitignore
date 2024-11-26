@@ -1,3 +1,5 @@
 file
 values
 admin.conf
+*.crt
+*.key

@@ -8,6 +8,9 @@
   * comment `cluster.etcd.external`
 # Join Control Plane Node
   * comment `cluster.etcd`
+
+  * if use `--upload-certs` when init cluster, join must have `certificateKey`
+  * certs secret will expires use `kubeadm init phase upload-certs --upload-certs --config init.yaml` and get `certificateKey` or just forgot `certificateKey` use `kubeadm certs certificate-key`
 # Join Worker Node
   * comment `cluster.etcd`
   * comment `cluster.controlPlane`

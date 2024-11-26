@@ -23,6 +23,7 @@
 
 #   controlPlane:
 #     advertiseAddress: "10.10.0.146"
+#     certificateKey: "dd24dc41882a610a828bdda7f4e8fb3c2fd02091e4bec039025b8e7d047305f1"
 
 #   etcd:
 #     etcdHosts:
