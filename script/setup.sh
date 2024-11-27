@@ -1,6 +1,14 @@
 #! /bin/bash
 
-function check() {
+# default setup
+runtime_container=unix:///var/run/containerd/containerd.sock
+k8s_version=v1.31
+cni_version=v1.6.0
+lb_port=9000
+server_port=6443
+calico_version=v3.29.1
+
+function check_hostname_url() {
   set -e
 
   if [ -z ${hostname} ]
@@ -18,6 +26,18 @@ function check() {
   set +e
 }
 
+function check_pod_cidr() {
+  set -e
+
+  if [ -z ${pod_cidr} ]
+  then
+    echo "pod cidr is not define"
+    exit 0
+  fi
+
+  set +e
+}
+
 function help_func() {
   set -e
 
@@ -28,18 +48,26 @@ help:
   print this help
 base:
   setup base component
-  -r|--runtime-container: unix socket of runtime container endpoint (default: unix:///var/run/containerd/containerd.sock)
-  -v|--k8s-version      : kubernetes version (default: v1.31)
-  -c|--cni-version      : cni plugins version (default: v1.6.0)
+  --runtime-container: unix socket of runtime container endpoint (default: ${runtime_container})
+  --k8s-version      : kubernetes version (default: ${k8s_version})
+  --cni-version      : cni plugins version (default: ${cni_version})
 etcd:
   setup etcd for external etcd cluster
-  -u|--url      : url for download components (eg: https://example.com/file)
-  -n|--hostname : machine's hostname
+  --url      : url for download components (eg: https://example.com/file)
+  --hostname : machine's hostname
 control:
   setup control plane
-  -u|--url      : url for download components (eg: https://example.com/file)
-  -n|--hostname : machine's hostname
-     --nginx    : nginx load balancer enable
+  --url      : url for download components (eg: https://example.com/file)
+  --hostname : machine's hostname
+  --nginx    : nginx load balancer enable
+cni:
+  install calico cni plugins for kubernetes cluster (note: apply to current kubernetes context)
+  --calico-version: calico version (default: ${calico_version})
+  --pod-cidr      : pod cidr in kubernetes cluster configuration
+lb:
+  setup kubernetes api load balancer with nginx
+  --lb-port     : load balancer port (default: ${lb_port})
+  --server-port : kubernetes api server port (default: ${server_port})
 EOF
 
   set +e
@@ -109,7 +137,7 @@ EOF
 function etcd() {
   set -e
 
-  check
+  check_hostname_url
 
   # prepare essential file
   mkdir -p /etc/systemd/system/kubelet.service.d
@@ -145,36 +173,7 @@ EOF
 function control() {
   set -e
 
-  check
-
-  # nginx load balancer enable
-  apt-get install -y nginx libnginx-mod-stream
-
-  # config load balancer (TODO)
-
-  sed -i 's/include \/etc\/nginx\/conf.d\/\*.conf/# include \/etc\/nginx\/conf.d\/\*.conf/g' /etc/nginx/nginx.conf
-
-  cat << EOF > /etc/nginx/conf.d/kubernetes-apis-lb.conf
-stream {
-  upstream kubernetes_apis {
-    least_conn;
-    server localhost:${server_port};
-  }
-  server {
-    listen ${lb_port};
-    proxy_pass kubernetes_apis;
-  }
-}
-EOF
-
-  if [ $(cat /etc/nginx/nginx.conf | grep "kubernetes-apis-lb.conf" | wc -l) -eq 0 ]
-  then
-    cat << EOF >> /etc/nginx/nginx.conf
-include /etc/nginx/conf.d/kubernetes-apis-lb.conf;
-EOF
-  fi
-
-  systemctl restart nginx
+  check_hostname_url
 
   # prepare essential file
   mkdir -p /etc/kubernetes/pki/etcd
@@ -190,42 +189,83 @@ EOF
   set +e
 }
 
+function calico_cni() {
+  set -e
+
+  check_pod_cidr
+
+  kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/${calico_version}/manifests/tigera-operator.yaml
+  curl https://raw.githubusercontent.com/projectcalico/calico/${calico_version}/manifests/custom-resources.yaml -O
+  sed -i "s/192.168.0.0\/16/${cidr_prefix}\/${cidr_block}/" custom-resources.yaml
+  kubectl apply -f custom-resources.yaml
+
+  set +e
+}
+
+function k8s_api_lb() {
+  set -e
+
+  apt-get update
+  
+  # nginx load balancer enable
+  apt-get install -y nginx libnginx-mod-stream nginx-extras
+
+  # config load balancer
+
+  sed -i 's/include \/etc\/nginx\/conf.d\/\*.conf/# include \/etc\/nginx\/conf.d\/\*.conf/g' /etc/nginx/nginx.conf
+
+  cat << EOF > /etc/nginx/conf.d/kubernetes-apis-lb.conf
+stream {
+  upstream kubernetes_apis {
+    server localhost:${server_port};
+  }
+  server {
+    listen ${lb_port};
+    real_ip_header X-Forwarded-For;
+    proxy_next_upstream error timout http_500;
+    proxy_next_upstream_timeout 3;
+    proxy_pass kubernetes_apis;
+  }
+}
+EOF
+
+  if [ $(cat /etc/nginx/nginx.conf | grep "kubernetes-apis-lb.conf" | wc -l) -eq 0 ]
+  then
+    cat << EOF >> /etc/nginx/nginx.conf
+include /etc/nginx/conf.d/kubernetes-apis-lb.conf;
+EOF
+  fi
+
+  systemctl restart nginx
+
+  set +e
+}
+
 action=$1
 shift
 params="$@"
 
-# default setup
-runtime_container=unix:///var/run/containerd/containerd.sock
-k8s_version=v1.31
-cni_version=v1.6.0
-lb_port=9000
-server_port=6443
-
 while (( "$#" )); do
   case "$1" in
-    -r|--runtime-container)
+    --runtime-container)
       runtime_container=$2
       shift 2
       ;;
-    -v|--k8s-version)
+    --k8s-version)
       k8s_version=$2
       shift 2
       ;;
-    -c|--cni-version)
+    --cni-version)
       cni_version=$2
       shift 2
       ;;
-    -n|--hostname)
+    --hostname)
       hostname=$2
       shift 2
       ;;
-    -u|--url)
+    --url)
       url=$2
       shift 2
-      ;;
-    --nginx)
-      nginx_enable=true
-      shift
       ;;
     --lb-port)
       lb_port=$2
@@ -233,6 +273,16 @@ while (( "$#" )); do
       ;;
     --server-port)
       server_port=$2
+      shift 2
+      ;;
+    --calico-version)
+      calico_version=$2
+      shift 2
+      ;;
+    --pod-cidr)
+      pod_cidr=$2
+      cidr_prefix=$(echo $pod_cidr | cut -d "/" -f1)
+      cidr_block=$(echo $pod_cidr | cut -d "/" -f2)
       shift 2
       ;;
     *)
@@ -258,7 +308,16 @@ case ${action} in
   control
   exit 0
   ;;
+  cni)
+  calico_cni
+  exit 0
+  ;;
+  lb)
+  k8s_api_lb
+  exit 0
+  ;;
   *)
+  echo "invalid action"
   exit 0
   ;;
 
