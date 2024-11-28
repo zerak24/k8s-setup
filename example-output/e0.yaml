@@ -1,0 +1,29 @@
+---
+# Source: k8s-config/templates/config.yaml
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+etcd:
+  local:
+    serverCertSANs:
+    - 10.10.0.161
+    peerCertSANs:
+    - 10.10.0.161
+    extraArgs:
+      - name: initial-cluster
+        value: e0=https://10.10.0.161:2380
+      - name: initial-cluster-state
+        value: new
+      - name: listen-peer-urls
+        value: https://10.10.0.161:2380
+      - name: listen-client-urls
+        value: https://10.10.0.161:2379
+      - name: advertise-client-urls
+        value: https://10.10.0.161:2379
+      - name: initial-advertise-peer-urls
+        value: https://10.10.0.161:2380
+---
+# Source: k8s-config/templates/init.yaml
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: 10.10.0.161

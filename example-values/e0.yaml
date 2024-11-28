@@ -1,0 +1,30 @@
+cluster:
+  name: "dummy-cluster"
+  version: "v1.31.2"
+  controlPlaneEndpoint: "192.168.180.133:9000"
+  defaultCriSocket: "unix:///var/run/containerd/containerd.sock"
+  networking:
+    podSubnet: 10.100.0.0/16
+    serviceSubnet: 10.120.0.0/16
+  apiServer:
+    additionalCertSANs:
+    - 192.168.180.133
+
+  node:
+    criSocket: "unix:///var/run/containerd/containerd.sock"
+    taints:
+      - key: "usage"
+        value: "monitor"
+        effect: "NoSchedule"
+    join:
+      token: "abcdef.1234567890abcdef"
+      caCertHashes:
+        - sha256:c6cf3ab7051e97c30808179739d7dca2431abe1dddf32c66d742a8e857d20123
+
+  etcd:
+    etcdHosts:
+      e0: 10.10.0.161
+
+    local:
+      kubelet: false
+      advertiseAddress: "10.10.0.161"
