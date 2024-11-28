@@ -53,6 +53,7 @@ lb:
   --lb-port: load balancer serve port
 dns:
   copy template file
+  --dir: directory store the ouput file (default: $(pwd))
   * note: reconfig file db.internal
 EOF
 
