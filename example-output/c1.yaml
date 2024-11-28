@@ -1,0 +1,16 @@
+---
+# Source: k8s-config/templates/join.yaml
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: JoinConfiguration
+nodeRegistration:
+  criSocket: unix:///var/run/containerd/containerd.sock
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: 192.168.180.143:9000
+    caCertHashes:
+    - sha256:252f6619e115c30bb700deae6d4270fbe0211947024b76438ef191396673ed52
+    token: 9u5b73.g1mnkitz67rh6ua1
+controlPlane:
+  localAPIEndpoint:
+    advertiseAddress: 10.10.0.164
+  certificateKey: 731fe446015fef644438d7138bf6fabf732c05d82e2516fcfb30caf171c41e3d

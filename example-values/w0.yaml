@@ -1,0 +1,23 @@
+cluster:
+  name: "dummy"
+  version: "v1.31.2"
+  controlPlaneEndpoint: "192.168.180.143:9000"
+  defaultCriSocket: "unix:///var/run/containerd/containerd.sock"
+  networking:
+    podSubnet: 10.100.0.0/16
+    serviceSubnet: 10.120.0.0/16
+  apiServer:
+    additionalCertSANs:
+    - 192.168.180.143
+
+  node:
+    criSocket: "unix:///var/run/containerd/containerd.sock"
+#     taints:
+#       - key: "usage"
+#         value: "monitor"
+#         effect: "NoSchedule"
+
+#   controlPlane:
+#     advertiseAddress: "10.10.0.146"
+
+

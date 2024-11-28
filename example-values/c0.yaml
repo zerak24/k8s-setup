@@ -1,0 +1,27 @@
+cluster:
+  name: "dummy-cluster"
+  version: "v1.31.2"
+  controlPlaneEndpoint: "192.168.180.143:9000"
+  defaultCriSocket: "unix:///var/run/containerd/containerd.sock"
+  networking:
+    podSubnet: 10.100.0.0/16
+    serviceSubnet: 10.120.0.0/16
+  apiServer:
+    additionalCertSANs:
+    - 192.168.180.143
+
+  node:
+    criSocket: "unix:///var/run/containerd/containerd.sock"
+
+  controlPlane:
+    advertiseAddress: "10.10.0.162"
+
+  etcd:
+    etcdHosts:
+      etcd-0: 10.10.0.161
+
+    external:
+      caFile: /etc/kubernetes/pki/etcd/ca.crt
+      certFile: /etc/kubernetes/pki/apiserver-etcd-client.crt
+      keyFile: /etc/kubernetes/pki/apiserver-etcd-client.key
+
