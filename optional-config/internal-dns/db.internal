@@ -1,0 +1,11 @@
+$TTL 300 
+@       IN      SOA     ns0.internal. admin.internal. (
+      2         ; Serial
+      3600      ; Refresh
+      1800      ; Retry
+      64800     ; Expire
+      18000     ; minimum
+)
+        IN    	NS      ns0.internal.
+ns0	    IN      A       10.10.0.171
+e0	    IN      A       10.10.0.161

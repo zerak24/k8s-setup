@@ -8,18 +8,12 @@ lb_port=9000
 server_port=6443
 calico_version=v3.29.1
 
-function check_hostname_url() {
+function check_hostname() {
   set -e
 
   if [ -z ${hostname} ]
   then
     echo "hostname is not define"
-    exit 0
-  fi
-
-  if [ -z ${url} ]
-  then
-    echo "url is not define"
     exit 0
   fi
 
@@ -32,6 +26,18 @@ function check_pod_cidr() {
   if [ -z ${pod_cidr} ]
   then
     echo "pod cidr is not define"
+    exit 0
+  fi
+
+  set +e
+}
+
+function check_url() {
+  set -e
+
+  if [ -z ${url} ]
+  then
+    echo "url is not define"
     exit 0
   fi
 
@@ -65,9 +71,10 @@ cni:
   --calico-version: calico version (default: ${calico_version})
   --pod-cidr      : pod cidr in kubernetes cluster configuration
 lb:
-  setup kubernetes api load balancer with nginx
-  --lb-port     : load balancer port (default: ${lb_port})
-  --server-port : kubernetes api server port (default: ${server_port})
+  setup kubernetes api load balancer with nginx (optional)
+dns:
+  setup internal dns (optional)
+  * note: remember to add nameserver to /etc/resolve.conf
 EOF
 
   set +e
@@ -76,15 +83,12 @@ EOF
 function base() {
   set -e
 
-  # turn off swap
   sed -i 's/\/swap/#\/swap/1' /etc/fstab
   swapoff -a
 
-  # install tools
   apt-get update
   apt-get -y install net-tools apt-transport-https ca-certificates curl gpg
 
-  # enable ip_forward
   cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.ipv4.ip_forward = 1
 EOF
@@ -92,7 +96,6 @@ EOF
 
   echo br_netfilter | tee /etc/modules-load.d/kubernetes.conf
 
-  # add apt key rings
   install -m 0755 -d /etc/apt/keyrings
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
   chmod a+r /etc/apt/keyrings/docker.asc
@@ -106,7 +109,6 @@ EOF
 
   apt-get update
 
-  # setup containerd && enable plugin cri
   apt-get install -y containerd.io
   apt-mark hold containerd.io
   sed -i 's/disabled_plugins/#disabled_plugins/g' /etc/containerd/config.toml
@@ -120,13 +122,11 @@ EOF
 
   systemctl enable --now containerd
 
-  # setup k8s tools
   apt-get install -y kubelet kubeadm kubectl
   apt-mark hold kubelet kubeadm kubectl
 
   systemctl enable --now kubelet
   
-  # reload service
   crictl config --set runtime-endpoint=${runtime_container}
   systemctl restart containerd
   systemctl restart kubelet
@@ -137,9 +137,9 @@ EOF
 function etcd() {
   set -e
 
-  check_hostname_url
+  check_hostname
+  check_url
 
-  # prepare essential file
   mkdir -p /etc/systemd/system/kubelet.service.d
   mkdir -p /etc/kubernetes/pki/etcd
 
@@ -158,13 +158,11 @@ EOF
   systemctl daemon-reload
   systemctl restart kubelet
 
-  # init essential certs
   kubeadm init phase certs etcd-server --config=init.yaml
   kubeadm init phase certs etcd-peer --config=init.yaml
   kubeadm init phase certs etcd-healthcheck-client --config=init.yaml
   kubeadm init phase certs apiserver-etcd-client --config=init.yaml
 
-  # init cluster
   kubeadm init phase etcd local --config=init.yaml
 
   set +e
@@ -173,9 +171,9 @@ EOF
 function control() {
   set -e
 
-  check_hostname_url
+  check_hostname
+  check_url
 
-  # prepare essential file
   mkdir -p /etc/kubernetes/pki/etcd
 
   wget ${url}/ca.crt -O /etc/kubernetes/pki/etcd/ca.crt
@@ -183,7 +181,6 @@ function control() {
   wget ${url}/apiserver-etcd-client.key -O /etc/kubernetes/pki/apiserver-etcd-client.key
   wget ${url}/${hostname}.yaml -O init.yaml
 
-  # init cluster
   kubeadm init --config=init.yaml --upload-certs
 
   set +e
@@ -205,39 +202,42 @@ function calico_cni() {
 function k8s_api_lb() {
   set -e
 
+  check_url
+
   apt-get update
-  
-  # nginx load balancer enable
   apt-get install -y nginx libnginx-mod-stream nginx-extras
 
-  # config load balancer
+  wget ${url}/kubernetes-api-lb.conf -O /etc/nginx/conf.d/kubernetes-api-lb.conf
 
   sed -i 's/include \/etc\/nginx\/conf.d\/\*.conf/# include \/etc\/nginx\/conf.d\/\*.conf/g' /etc/nginx/nginx.conf
 
-  cat << EOF > /etc/nginx/conf.d/kubernetes-apis-lb.conf
-stream {
-  upstream kubernetes_apis {
-    server localhost:${server_port};
-  }
-  server {
-    listen ${lb_port};
-    real_ip_header X-Forwarded-For;
-    proxy_next_upstream error timout http_500;
-    proxy_next_upstream_timeout 3;
-    proxy_pass kubernetes_apis;
-  }
-}
-EOF
-
-  if [ $(cat /etc/nginx/nginx.conf | grep "kubernetes-apis-lb.conf" | wc -l) -eq 0 ]
+  if [ $(cat /etc/nginx/nginx.conf | grep "kubernetes-api-lb.conf" | wc -l) -eq 0 ]
   then
-    cat << EOF >> /etc/nginx/nginx.conf
-include /etc/nginx/conf.d/kubernetes-apis-lb.conf;
-EOF
+    echo "include /etc/nginx/conf.d/kubernetes-api-lb.conf;" >> /etc/nginx/nginx.conf
   fi
 
   systemctl restart nginx
 
+  set +e
+}
+
+function internal_dns() {
+  set -e
+  
+  check_url
+
+  apt-get update
+  apt-get install -y bind9 bind9utils bind9-doc
+
+  sed -i "s/-u bind/-u bind -4/g" /etc/default/named
+
+  systemctl restart bind9
+
+  wget ${url}/named.conf.internal -O /etc/bind/named.conf.internal
+  wget ${url}/db.internal -O /etc/bind/db.internal
+
+  systemctl restart bind9
+  
   set +e
 }
 
@@ -265,14 +265,6 @@ while (( "$#" )); do
       ;;
     --url)
       url=$2
-      shift 2
-      ;;
-    --lb-port)
-      lb_port=$2
-      shift 2
-      ;;
-    --server-port)
-      server_port=$2
       shift 2
       ;;
     --calico-version)
@@ -314,6 +306,10 @@ case ${action} in
   ;;
   lb)
   k8s_api_lb
+  exit 0
+  ;;
+  dns)
+  internal_dns
   exit 0
   ;;
   *)

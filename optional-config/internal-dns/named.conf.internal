@@ -1,0 +1,13 @@
+options {
+        listen-on port 53  { any; };
+        directory       "/var/cache/bind";
+        allow-query     { any; };
+        recursion yes;
+        allow-recursion { any; };
+};
+
+zone "internal" {
+        type master;
+        file "/etc/bind/db.internal";
+        allow-update { none; };
+}; 
