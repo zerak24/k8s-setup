@@ -14,7 +14,7 @@ function check_hostname() {
   if [ -z ${hostname} ]
   then
     echo "hostname is not define"
-    exit 0
+    exit 1
   fi
 
   set +e
@@ -26,7 +26,7 @@ function check_pod_cidr() {
   if [ -z ${pod_cidr} ]
   then
     echo "pod cidr is not define"
-    exit 0
+    exit 1
   fi
 
   set +e
@@ -38,7 +38,7 @@ function check_url() {
   if [ -z ${url} ]
   then
     echo "url is not define"
-    exit 0
+    exit 1
   fi
 
   set +e

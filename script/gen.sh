@@ -11,7 +11,7 @@ function check_hostname() {
   if [ -z ${hostname} ]
   then
     echo "hostname is not define"
-    exit 0
+    exit 1
   fi
 
   set +e
@@ -23,7 +23,7 @@ function check_file() {
   if [ -z ${file} ]
   then
     echo "file is not define"
-    exit 0
+    exit 1
   fi
 
   set +e
