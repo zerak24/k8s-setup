@@ -210,7 +210,7 @@ function k8s_api_lb() {
   check_url
 
   apt-get update
-  apt-get install -y nginx libnginx-mod-stream nginx-extras
+  apt-get install -y nginx libnginx-mod-stream
 
   wget ${url}/kubernetes-api-lb.conf -O /etc/nginx/conf.d/kubernetes-api-lb.conf
 

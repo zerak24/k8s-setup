@@ -94,7 +94,7 @@ function gen_nginx_lb() {
   IFS=","
   for v in ${servers}
   do
-    sed -i "s/^#######/\t\tserver ${v};\n#######/" ${dir}/kubernetes-api-lb.conf
+    sed -i "s/^#######/\tserver ${v};\n#######/" ${dir}/kubernetes-api-lb.conf
   done
 
   sed -i "s/^#######//" ${dir}/kubernetes-api-lb.conf
