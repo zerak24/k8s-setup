@@ -32,16 +32,12 @@ function check_pod_cidr() {
   set +e
 }
 
-function check_url() {
-  set -e
-
-  if [ -z ${url} ]
+function check_file() {
+  if [ ! -f $1 ]
   then
-    echo "url is not define"
+    echo "missing $1 file"
     exit 1
   fi
-
-  set +e
 }
 
 function help_func() {
@@ -87,7 +83,7 @@ function base() {
   swapoff -a
 
   apt-get update
-  apt-get -y install net-tools apt-transport-https ca-certificates curl gpg
+  apt-get -y install net-tools apt-transport-https ca-certificates curl gpg wget
 
   cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.ipv4.ip_forward = 1
@@ -143,15 +139,18 @@ function etcd() {
   set -e
 
   check_hostname
-  check_url
 
   mkdir -p /etc/systemd/system/kubelet.service.d
   mkdir -p /etc/kubernetes/pki/etcd
 
-  wget ${url}/ca.crt -O /etc/kubernetes/pki/etcd/ca.crt
-  wget ${url}/ca.key -O /etc/kubernetes/pki/etcd/ca.key
-  wget ${url}/kubelet-${hostname}.yaml -O /etc/systemd/system/kubelet.service.d/kubelet.conf
-  wget ${url}/${hostname}.yaml -O init.yaml
+  check_file ca.crt
+  check_file ca.key
+  check_file kubelet-${hostname}.yaml
+  check_file ${hostname}.yaml
+
+  cp ca.crt /etc/kubernetes/pki/etcd/ca.crt
+  cp ca.key /etc/kubernetes/pki/etcd/ca.key
+  cp kubelet-${hostname}.yaml /etc/systemd/system/kubelet.service.d/kubelet.conf
 
   cat << EOF > /etc/systemd/system/kubelet.service.d/20-etcd-service-manager.conf
 [Service]
@@ -163,12 +162,12 @@ EOF
   systemctl daemon-reload
   systemctl restart kubelet
 
-  kubeadm init phase certs etcd-server --config=init.yaml
-  kubeadm init phase certs etcd-peer --config=init.yaml
-  kubeadm init phase certs etcd-healthcheck-client --config=init.yaml
-  kubeadm init phase certs apiserver-etcd-client --config=init.yaml
+  kubeadm init phase certs etcd-server --config=${hostname}.yaml
+  kubeadm init phase certs etcd-peer --config=${hostname}.yaml
+  kubeadm init phase certs etcd-healthcheck-client --config=${hostname}.yaml
+  kubeadm init phase certs apiserver-etcd-client --config=${hostname}.yaml
 
-  kubeadm init phase etcd local --config=init.yaml
+  kubeadm init phase etcd local --config=${hostname}.yaml
 
   set +e
 }
@@ -177,16 +176,19 @@ function control() {
   set -e
 
   check_hostname
-  check_url
 
   mkdir -p /etc/kubernetes/pki/etcd
 
-  wget ${url}/ca.crt -O /etc/kubernetes/pki/etcd/ca.crt
-  wget ${url}/apiserver-etcd-client.crt -O /etc/kubernetes/pki/apiserver-etcd-client.crt
-  wget ${url}/apiserver-etcd-client.key -O /etc/kubernetes/pki/apiserver-etcd-client.key
-  wget ${url}/${hostname}.yaml -O init.yaml
+  check_file ca.crt
+  check_file apiserver-etcd-client.crt
+  check_file apiserver-etcd-client.key
+  check_file ${hostname}.yaml
 
-  kubeadm init --config=init.yaml --upload-certs
+  cp ca.crt /etc/kubernetes/pki/etcd/ca.crt
+  cp apiserver-etcd-client.crt /etc/kubernetes/pki/apiserver-etcd-client.crt
+  cp apiserver-etcd-client.key /etc/kubernetes/pki/apiserver-etcd-client.key
+
+  kubeadm init --config=${hostname}.yaml --upload-certs
 
   set +e
 }
@@ -207,12 +209,12 @@ function calico_cni() {
 function k8s_api_lb() {
   set -e
 
-  check_url
-
   apt-get update
   apt-get install -y nginx libnginx-mod-stream
 
-  wget ${url}/kubernetes-api-lb.conf -O /etc/nginx/conf.d/kubernetes-api-lb.conf
+  check_file kubernetes-api-lb.conf
+
+  cp kubernetes-api-lb.conf /etc/nginx/conf.d/kubernetes-api-lb.conf
 
   sed -i 's/include \/etc\/nginx\/conf.d\/\*.conf/# include \/etc\/nginx\/conf.d\/\*.conf/g' /etc/nginx/nginx.conf
 
@@ -229,8 +231,6 @@ function k8s_api_lb() {
 function internal_dns() {
   set -e
   
-  check_url
-
   apt-get update
   apt-get install -y bind9 bind9utils bind9-doc
 
@@ -238,8 +238,11 @@ function internal_dns() {
 
   systemctl restart bind9
 
-  wget ${url}/named.conf.internal -O /etc/bind/named.conf.internal
-  wget ${url}/db.internal -O /etc/bind/db.internal
+  check_file named.conf.internal
+  check_file db.internal
+
+  cp named.conf.internal /etc/bind/named.conf.internal
+  cp db.internal /etc/bind/db.internal
 
   systemctl restart bind9
   
@@ -266,10 +269,6 @@ while (( "$#" )); do
       ;;
     --hostname)
       hostname=$2
-      shift 2
-      ;;
-    --url)
-      url=$2
       shift 2
       ;;
     --calico-version)
